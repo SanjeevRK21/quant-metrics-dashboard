@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Quant Metrics Dashboard{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: { bg: '#050810', card: '#0d1117', border: '#1e2a3a' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        * { box-sizing: border-box; }
+
+        /* ── Animated deep-space background ── */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #030614;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Shifting base gradient */
+        @keyframes bg-shift {
+            0%   { background-position: 0% 50%; }
+            50%  { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(
+                125deg,
+                #03061480 0%,
+                #0a003a80 25%,
+                #00103080 50%,
+                #1a003a80 75%,
+                #03001480 100%
+            );
+            background-size: 400% 400%;
+            animation: bg-shift 18s ease infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Glowing grid */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0,240,255,0.06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,240,255,0.06) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 1;
+            mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+            -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+        }
+
+        /* Aurora blobs */
+        @keyframes blob1 {
+            0%,100% { transform: translate(0,0) scale(1); }
+            33%      { transform: translate(80px,-60px) scale(1.15); }
+            66%      { transform: translate(-50px,40px) scale(0.9); }
+        }
+        @keyframes blob2 {
+            0%,100% { transform: translate(0,0) scale(1); }
+            33%      { transform: translate(-90px,70px) scale(1.2); }
+            66%      { transform: translate(60px,-50px) scale(0.85); }
+        }
+        @keyframes blob3 {
+            0%,100% { transform: translate(0,0) scale(1); }
+            50%      { transform: translate(40px,80px) scale(1.1); }
+        }
+
+        .aurora-blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(90px);
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.45;
+        }
+        .aurora-1 {
+            width: 600px; height: 600px;
+            top: -150px; left: -100px;
+            background: radial-gradient(circle, #7b00ff 0%, #00c3ff 60%, transparent 100%);
+            animation: blob1 20s ease-in-out infinite;
+        }
+        .aurora-2 {
+            width: 700px; height: 500px;
+            top: 20%; right: -200px;
+            background: radial-gradient(circle, #ff0080 0%, #7b00ff 55%, transparent 100%);
+            animation: blob2 25s ease-in-out infinite;
+        }
+        .aurora-3 {
+            width: 500px; height: 500px;
+            bottom: -100px; left: 30%;
+            background: radial-gradient(circle, #00f0ff 0%, #0050ff 60%, transparent 100%);
+            animation: blob3 22s ease-in-out infinite;
+        }
+        .aurora-4 {
+            width: 400px; height: 400px;
+            top: 50%; left: 20%;
+            background: radial-gradient(circle, #ff6b35 0%, #ff0080 55%, transparent 100%);
+            animation: blob1 28s ease-in-out infinite reverse;
+            opacity: 0.25;
+        }
+
+        /* Neon glow keyframes */
+        @keyframes neon-pulse {
+            0%, 100% { box-shadow: 0 0 5px currentColor, 0 0 10px currentColor, 0 0 20px currentColor; }
+            50%       { box-shadow: 0 0 10px currentColor, 0 0 25px currentColor, 0 0 50px currentColor; }
+        }
+        @keyframes shimmer {
+            0%   { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50%       { transform: translateY(-6px); }
+        }
+        @keyframes slide-up {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+
+        /* Scanline sweep */
+        @keyframes scan-sweep {
+            0%   { top: -4px; opacity: 0.6; }
+            95%  { opacity: 0.6; }
+            100% { top: 100vh; opacity: 0; }
+        }
+        .scanline {
+            position: fixed;
+            left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(0,240,255,0.4), rgba(180,0,255,0.4), transparent);
+            z-index: 2;
+            pointer-events: none;
+            animation: scan-sweep 8s linear infinite;
+        }
+
+        .animate-slide-up    { animation: slide-up 0.5s ease-out forwards; }
+        .animate-fade-in     { animation: fade-in  0.4s ease-out forwards; }
+        .animate-float       { animation: float 3s ease-in-out infinite; }
+
+        /* Navbar */
+        .navbar {
+            background: rgba(3, 6, 20, 0.75);
+            backdrop-filter: blur(24px);
+            border-bottom: 1px solid rgba(0,240,255,0.18);
+            box-shadow: 0 0 30px rgba(0,240,255,0.06), 0 4px 20px rgba(0,0,0,0.4);
+        }
+        .navbar-title {
+            background: linear-gradient(90deg, #00f0ff, #b400ff, #ff0080, #00f0ff);
+            background-size: 300% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 5s linear infinite;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: rgba(3, 6, 20, 0.7);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(0,240,255,0.12);
+        }
+        .sidebar-link {
+            position: relative;
+            transition: all 0.25s ease;
+            color: #4a6080;
+        }
+        .sidebar-link::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, #00f0ff, #b400ff);
+            border-radius: 0 2px 2px 0;
+            opacity: 0;
+            transition: opacity 0.25s;
+        }
+        .sidebar-link.active::before, .sidebar-link:hover::before { opacity: 1; }
+        .sidebar-link.active {
+            background: rgba(0,240,255,0.08);
+            color: #00f0ff;
+        }
+        .sidebar-link:hover {
+            background: rgba(0,240,255,0.05);
+            color: #a0aec0;
+        }
+        .sidebar-link.active i { color: #00f0ff; filter: drop-shadow(0 0 8px #00f0ff); }
+
+        /* Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #00f0ff, #b400ff);
+            border-radius: 10px;
+        }
+
+        /* Status dot */
+        .status-dot {
+            background: #00ff88;
+            box-shadow: 0 0 6px #00ff88, 0 0 14px #00ff88;
+            animation: neon-pulse 2s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="text-gray-300 min-h-screen flex flex-col relative">
+
+    <!-- Aurora background blobs -->
+    <div class="aurora-blob aurora-1"></div>
+    <div class="aurora-blob aurora-2"></div>
+    <div class="aurora-blob aurora-3"></div>
+    <div class="aurora-blob aurora-4"></div>
+
+    <!-- Scanline sweep -->
+    <div class="scanline"></div>
+
+    <!-- Canvas particle layer -->
+    <canvas id="particles" style="position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0.5;"></canvas>
+    <script>
+    (function(){
+        const c = document.getElementById('particles');
+        const ctx = c.getContext('2d');
+        let W, H, pts = [];
+        const COLORS = ['#00f0ff','#b400ff','#ff0080','#00ff88','#ffdd57'];
+        function resize(){ W = c.width = window.innerWidth; H = c.height = window.innerHeight; }
+        function rand(a,b){ return a + Math.random()*(b-a); }
+        function init(){
+            pts = Array.from({length:60}, () => ({
+                x: rand(0,W), y: rand(0,H),
+                vx: rand(-0.3,0.3), vy: rand(-0.5,-0.1),
+                r: rand(1,2.5),
+                color: COLORS[Math.floor(rand(0,COLORS.length))],
+                alpha: rand(0.3,0.9),
+                life: rand(0,1), speed: rand(0.003,0.008)
+            }));
+        }
+        function draw(){
+            ctx.clearRect(0,0,W,H);
+            pts.forEach(p => {
+                p.life += p.speed;
+                if(p.life > 1){ p.life = 0; p.x = rand(0,W); p.y = H + 10; }
+                const a = Math.sin(p.life * Math.PI) * p.alpha;
+                ctx.beginPath();
+                ctx.arc(p.x + Math.sin(p.life*6)*8, p.y - p.life*H*0.7, p.r, 0, Math.PI*2);
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = a;
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = p.color;
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+            ctx.shadowBlur = 0;
+            requestAnimationFrame(draw);
+        }
+        resize();
+        init();
+        draw();
+        window.addEventListener('resize', ()=>{ resize(); init(); });
+    })();
+    </script>
+
+    <!-- Top Navbar -->
+    <nav class="navbar h-16 flex items-center justify-between px-6 sticky top-0 z-50">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-lg flex items-center justify-center animate-float"
+                 style="background: linear-gradient(135deg, #00f0ff, #b400ff); box-shadow: 0 0 15px rgba(0,240,255,0.4);">
+                <i class="fas fa-chart-line text-white text-sm"></i>
+            </div>
+            <h1 class="text-lg font-black tracking-tight navbar-title">Quant Metrics Dashboard</h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <span class="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border"
+                  style="color:#00f0ff; border-color:rgba(0,240,255,0.3); background:rgba(0,240,255,0.05);">⚡ Live</span>
+            <div class="w-8 h-8 rounded-full border-2"
+                 style="background:linear-gradient(135deg,#00f0ff,#b400ff); border-color:rgba(0,240,255,0.4);"></div>
+        </div>
+    </nav>
+
+    <div class="flex flex-1 overflow-hidden relative z-10">
+        <!-- Sidebar -->
+        <aside class="sidebar w-64 flex flex-col hidden md:flex flex-shrink-0">
+            <nav class="flex-1 py-8 px-4 space-y-1">
+                <a href="/" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl group">
+                    <i class="fas fa-home text-sm group-hover:scale-110 transition-transform"></i>
+                    <span class="font-semibold text-sm">Home</span>
+                </a>
+                <a href="javascript:void(0)" onclick="scrollToSection('analysis-section', this)" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl group">
+                    <i class="fas fa-microscope text-sm group-hover:scale-110 transition-transform"></i>
+                    <span class="font-semibold text-sm">Analysis</span>
+                </a>
+                <a href="javascript:void(0)" onclick="scrollToSection('risk-section', this)" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl group">
+                    <i class="fas fa-chart-area text-sm group-hover:scale-110 transition-transform"></i>
+                    <span class="font-semibold text-sm">Visuals</span>
+                </a>
+                <a href="javascript:void(0)" onclick="scrollToSection('portfolio-section', this)" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl group">
+                    <i class="fas fa-bolt text-sm group-hover:scale-110 transition-transform"></i>
+                    <span class="font-semibold text-sm">Drawdowns & Recoveries</span>
+                </a>
+            </nav>
+
+            <script>
+                function scrollToSection(id, el) {
+                    const target = document.getElementById(id);
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+                        el.classList.add('active');
+                    }
+                }
+            </script>
+
+            <div class="p-6 border-t" style="border-color:rgba(0,240,255,0.1);">
+                <div class="rounded-xl p-4" style="background:rgba(0,240,255,0.04); border:1px solid rgba(0,240,255,0.15);">
+                    <p class="text-[10px] font-black uppercase tracking-widest mb-3" style="color:#00f0ff;">System Status</p>
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full status-dot"></div>
+                        <span class="text-xs text-gray-400">Engine Online</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-10">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</body>
+</html>
