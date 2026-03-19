@@ -193,7 +193,7 @@ Insights + Visualization
 
 ## Installation
 ```
-git clone https://github.com/your-username/quant-analysis-platform.git
+git clone https://github.com/SanjeevRK21/quant-metrics-dashboard.git
 cd quant-analysis-platform
 
 pip install -r requirements.txt
